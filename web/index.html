@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>agents-view</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="shell masthead">
+    <div class="brand"><span aria-hidden="true">▤</span> agents-view</div>
+    <button id="theme" type="button">Dark mode</button>
+  </header>
+  <main class="shell">
+    <h1 id="project-name">AGENTS.md</h1>
+    <nav aria-label="View">
+      <button id="tab-project" class="tab active" aria-current="page" type="button">Project</button>
+      <button id="tab-sources" class="tab" type="button">Sources</button>
+    </nav>
+    <p id="alert" role="status" hidden></p>
+    <div id="view" aria-live="off"></div>
+  </main>
+</body>
+</html>

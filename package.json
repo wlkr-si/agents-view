@@ -1,0 +1,22 @@
+{
+  "name": "agents-view",
+  "version": "0.0.1",
+  "description": "A local editor for plain AGENTS.md files",
+  "type": "module",
+  "bin": { "agents-view": "dist/cli.js" },
+  "files": ["dist", "web", "README.md", "SPEC.md"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc && node -e \"require('node:fs').chmodSync('dist/cli.js', 0o755)\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src web",
+    "prepare": "npm run build"
+  },
+  "dependencies": { "markdown-it": "^14.1.0" },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.0",
+    "@types/markdown-it": "^14.1.0",
+    "@types/node": "^20.19.0",
+    "typescript": "^5.9.0"
+  }
+}
