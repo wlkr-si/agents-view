@@ -11,20 +11,44 @@ import (
 	"github.com/wlkr-si/agents-view/internal/document"
 )
 
+// Global represents a Global file already used by check.
+type Global struct {
+	Path, Text, Via string
+}
+
 func globalFiles() ([]string, error) {
+	var files []string
+	for _, agent := range []string{"claude", "codex"} {
+		globals, err := Globals(agent)
+		if err != nil {
+			return nil, err
+		}
+		for _, file := range globals {
+			files = append(files, file.Text)
+		}
+	}
+	return files, nil
+}
+
+// Globals returns the Global files for the agents supported by check.
+func Globals(agent string) ([]Global, error) {
 	home, _ := os.UserHomeDir()
 	if home == "" {
 		if current, err := user.Current(); err == nil {
 			home = current.HomeDir
 		}
 	}
-	claude := os.Getenv("CLAUDE_CONFIG_DIR")
-	if claude == "" {
-		claude = filepath.Join(home, ".claude")
+	if agent == "claude" {
+		config := os.Getenv("CLAUDE_CONFIG_DIR")
+		if config == "" {
+			config = filepath.Join(home, ".claude")
+		}
+		globals := claudeGlobals{seen: make(map[string]bool), home: home}
+		err := globals.add(filepath.Join(config, "CLAUDE.md"), "", 0)
+		return globals.files, err
 	}
-	globals := claudeGlobals{seen: make(map[string]bool), home: home}
-	if err := globals.add(filepath.Join(claude, "CLAUDE.md"), 0); err != nil {
-		return nil, err
+	if agent != "codex" {
+		return nil, nil
 	}
 
 	codex := os.Getenv("CODEX_HOME")
@@ -32,25 +56,25 @@ func globalFiles() ([]string, error) {
 		codex = filepath.Join(home, ".codex")
 	}
 	for _, name := range []string{"AGENTS.override.md", "AGENTS.md"} {
-		text, _, err := readGlobal(filepath.Join(codex, name))
+		path := filepath.Join(codex, name)
+		text, _, err := readGlobal(path)
 		if err != nil {
 			return nil, err
 		}
 		if document.TrimSpace(text) != "" {
-			globals.files = append(globals.files, text)
-			break
+			return []Global{{Path: path, Text: text}}, nil
 		}
 	}
-	return globals.files, nil
+	return nil, nil
 }
 
 type claudeGlobals struct {
-	files []string
+	files []Global
 	seen  map[string]bool
 	home  string
 }
 
-func (globals *claudeGlobals) add(path string, depth int) error {
+func (globals *claudeGlobals) add(path, via string, depth int) error {
 	text, exists, err := readGlobal(path)
 	if err != nil || !exists {
 		return err
@@ -67,7 +91,7 @@ func (globals *claudeGlobals) add(path string, depth int) error {
 		return nil
 	}
 	globals.seen[key] = true
-	globals.files = append(globals.files, text)
+	globals.files = append(globals.files, Global{Path: absolute, Text: text, Via: via})
 	if depth >= 5 {
 		return nil
 	}
@@ -79,7 +103,7 @@ func (globals *claudeGlobals) add(path string, depth int) error {
 		case !filepath.IsAbs(target):
 			target = filepath.Join(filepath.Dir(path), target)
 		}
-		if err := globals.add(target, depth+1); err != nil {
+		if err := globals.add(target, absolute, depth+1); err != nil {
 			return err
 		}
 	}

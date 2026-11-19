@@ -2,28 +2,27 @@
 
 Edit a plain `AGENTS.md` in the Editor, a local browser screen. The AGENTS.md tab shows the file. Sources shows the instruction files each agent reads, in load order, with each Override beside the Global line it replaces. Terms are defined in [CONTEXT.md](CONTEXT.md).
 
-Requires Git and Node 20 or later.
+Requires Go 1.24 or later to build. The Editor is embedded in the binary.
 
 ```sh
 gh repo clone wlkr-si/agents-view
 cd agents-view
-npm ci
-npm link
+go install ./cmd/agents-view
 cd /path/to/project
-agents-view view
+agents-view
 ```
 
-You can also run `node /path/to/agents-view/dist/cli.js` from the project folder. The tool edits `AGENTS.md` in the current directory. Use `view --no-open` to print the local address and open it yourself.
+Run `agents-view` from the project folder to edit its `AGENTS.md`. The Editor listens on a free loopback port unless you set `AGENTS_VIEW_PORT`. Press Ctrl-C to stop it.
 
 | Command | Result |
 | --- | --- |
+| `agents-view` | Open the Editor |
+| `agents-view --no-open` | Print the local Editor address without opening the browser |
 | `sections` | List section types and approximate tokens |
 | `read [section]` | Print the file or one section |
 | `write <section>` | Read a replacement body from stdin, creating the section if needed |
 | `check` | Report invalid format, broken pointers, stale overrides, and budget warnings |
-| `sources [--agent claude\|codex\|opencode\|gemini\|cursor\|copilot]` | List Sources and approximate tokens in load order |
-| `view` | Open the Editor |
 
-Diagram changes go to `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use a different local command that reads its prompt from stdin. Mermaid rendering needs access to jsDelivr.
+Diagram changes go to `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use a different local command that reads its prompt from stdin. The Editor shows Mermaid diagram text offline.
 
-The Sources view covers the v0 file conventions in [SPEC.md](SPEC.md). It estimates whole-file tokens and labels on-demand Nested files.
+The Sources tab currently shows the same Claude Code and Codex Global files as `agents-view check`, with whole-file token estimates. [SPEC.md](SPEC.md) describes the full Sources conventions.
