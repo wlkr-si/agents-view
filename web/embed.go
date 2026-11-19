@@ -4,5 +4,5 @@ import "embed"
 
 // Files contains the browser assets served by the Editor.
 //
-//go:embed index.html app.js style.css diagram.html diagram.js
+//go:embed index.html app.js style.css diagram.html diagram.js theme.js
 var Files embed.FS

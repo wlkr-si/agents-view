@@ -19,6 +19,7 @@ import (
 
 	"github.com/wlkr-si/agents-view/internal/document"
 	"github.com/wlkr-si/agents-view/internal/sources"
+	"github.com/wlkr-si/agents-view/internal/theme"
 	"github.com/wlkr-si/agents-view/web"
 )
 
@@ -29,6 +30,7 @@ const (
 
 var assets = map[string]struct{ name, contentType string }{
 	"/":           {"index.html", "text/html"},
+	"/theme.js":   {"theme.js", "text/javascript"},
 	"/app.js":     {"app.js", "text/javascript"},
 	"/style.css":  {"style.css", "text/css"},
 	"/diagram":    {"diagram.html", "text/html"},
@@ -53,6 +55,7 @@ type editor struct {
 	findSources FindSources
 	events      events
 	watched     watchedFiles
+	theme       theme.Store
 }
 
 // Serve publishes the Editor address once the listener has bound.
@@ -62,6 +65,11 @@ func Serve(ctx context.Context, dir string, findSources FindSources, ready func(
 		return err
 	}
 	defer root.Close()
+
+	themes, err := theme.Open()
+	if err != nil {
+		return err
+	}
 
 	port, _ := strconv.Atoi(strings.TrimSpace(os.Getenv("AGENTS_VIEW_PORT")))
 	listener, err := net.Listen("tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
@@ -74,7 +82,7 @@ func Serve(ctx context.Context, dir string, findSources FindSources, ready func(
 	defer cancel()
 	editor := &editor{
 		ctx: ctx, dir: dir, file: filepath.Join(dir, "AGENTS.md"),
-		host: listener.Addr().String(), root: root, findSources: findSources,
+		host: listener.Addr().String(), root: root, findSources: findSources, theme: themes,
 	}
 	editor.watched.add(editor.file)
 	go editor.watch()
@@ -139,6 +147,14 @@ func (editor *editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		switch {
+		case path == "/theme.css":
+			editor.themeCSS(w)
+		case path == "/theme":
+			var list theme.List
+			list, err = editor.theme.List()
+			if err == nil {
+				writeJSON(w, http.StatusOK, list)
+			}
 		case path == "/project":
 			err = editor.project(w)
 		case path == "/sources":
@@ -152,6 +168,8 @@ func (editor *editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPost:
 		switch path {
+		case "/theme":
+			err = editor.editTheme(w, r)
 		case "/section":
 			err = edit(w, r, editor.saveSection)
 		case "/override":

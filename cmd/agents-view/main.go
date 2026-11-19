@@ -16,7 +16,8 @@ agents-view sections
 agents-view read [section]
 agents-view write <section> < body.md
 agents-view check
-agents-view sources [--agent claude|codex|opencode|gemini|cursor|copilot]`
+agents-view sources [--agent claude|codex|opencode|gemini|cursor|copilot]
+agents-view theme [use <name|system|omarchy> | add <git-url>]`
 
 func main() {
 	code, err := run(os.Args[1:])
@@ -35,6 +36,9 @@ func run(args []string) (int, error) {
 	command := "view"
 	if len(args) > 0 && args[0] != "--no-open" {
 		command, args = args[0], args[1:]
+	}
+	if command == "theme" {
+		return 0, runTheme(args)
 	}
 	switch command {
 	case "view":

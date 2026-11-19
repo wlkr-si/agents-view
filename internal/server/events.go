@@ -46,6 +46,7 @@ func (events *events) serve(w http.ResponseWriter, r *http.Request) {
 	}
 	events.streams[stream] = struct{}{}
 	stream <- event{"job", events.job}
+	stream <- event{"theme", ""}
 	if r.Header.Get("Last-Event-ID") != "" {
 		stream <- event{"change", ""}
 	}
@@ -121,6 +122,7 @@ func (watch *watchedFiles) changed() bool {
 func (editor *editor) watch() {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
+	css := editor.theme.CurrentCSS()
 	for {
 		select {
 		case <-editor.ctx.Done():
@@ -128,6 +130,10 @@ func (editor *editor) watch() {
 		case <-ticker.C:
 			if editor.watched.changed() {
 				editor.events.broadcast(event{"change", ""})
+			}
+			if current := editor.theme.CurrentCSS(); css != current {
+				css = current
+				editor.events.broadcast(event{"theme", ""})
 			}
 		}
 	}
