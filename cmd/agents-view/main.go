@@ -11,7 +11,10 @@ import (
 	"github.com/wlkr-si/agents-view/internal/sources"
 )
 
+var version = "dev"
+
 const usage = `agents-view [--no-open]
+agents-view --version
 agents-view sections
 agents-view read [section]
 agents-view write <section> < body.md
@@ -29,6 +32,10 @@ func main() {
 }
 
 func run(args []string) (int, error) {
+	if len(args) == 1 && args[0] == "--version" {
+		fmt.Println("agents-view", version)
+		return 0, nil
+	}
 	if len(args) > 0 && (args[0] == "--help" || args[0] == "-h") {
 		fmt.Println(usage)
 		return 0, nil

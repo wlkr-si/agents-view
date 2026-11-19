@@ -11,15 +11,16 @@ Edit a plain `AGENTS.md` in the Editor, a local browser screen. The AGENTS.md ta
 
 Every change runs `go run ./tools/budget`, which fails when a number is broken.
 
-Requires Go 1.24 or later to build. The Editor is embedded in the binary.
+## Install
 
-```sh
-gh repo clone wlkr-si/agents-view
-cd agents-view
-go install -ldflags="-s -w" ./cmd/agents-view
-cd /path/to/project
-agents-view
-```
+- **Homebrew** on macOS and Linux: `brew install wlkr-si/tap/agents-view`
+- **npm**: `npx agents-view` to run it, or `npm install -g agents-view` to install the command. The launcher verifies and caches the binary in the npm package directory on first use.
+- **Install script** on macOS and Linux: `curl -fsSL https://raw.githubusercontent.com/wlkr-si/agents-view/main/install.sh | sh`. It verifies the latest release and installs to `~/.local/bin`. Set `AGENTS_VIEW_VERSION` to a release tag to pin it or `AGENTS_VIEW_INSTALL_DIR` to change the destination.
+- **[GitHub Releases](https://github.com/wlkr-si/agents-view/releases)**: download the archive for your OS and CPU, verify it against `checksums.txt`, and put the extracted binary on your PATH. macOS and Linux support arm64 and amd64. Windows binaries for both are best-effort.
+
+Run `agents-view --version` to see the installed version.
+
+To build from source, clone the repository and run `go install -ldflags="-s -w" ./cmd/agents-view` with Go 1.24 or later. The Editor is embedded in the binary.
 
 Run `agents-view` from the project folder to edit its `AGENTS.md`. The Editor listens on a free loopback port unless you set `AGENTS_VIEW_PORT`. Press Ctrl-C to stop it.
 
@@ -27,6 +28,7 @@ Run `agents-view` from the project folder to edit its `AGENTS.md`. The Editor li
 | --- | --- |
 | `agents-view` | Open the Editor |
 | `agents-view --no-open` | Print the local Editor address without opening the browser |
+| `agents-view --version` | Print the version |
 | `sections` | List section types and approximate tokens |
 | `read [section]` | Print the file or one section |
 | `write <section>` | Read a replacement body from stdin, creating the section if needed |
@@ -54,3 +56,11 @@ Agents View stores the selection as `theme = "<name>"` in `~/.config/agents-view
 
 - [Norwegian Wood Sunrise](https://github.com/ArveLomsland/norwegian-wood-sunrise) by Arve Lomsland. Only its `colors.toml` is bundled. The [upstream MIT license request](https://github.com/ArveLomsland/norwegian-wood-sunrise/issues/2) is open.
 - [Flexoki Light](https://github.com/basecamp/omarchy/tree/master/themes/flexoki-light) from Omarchy. Its [MIT notice](themes/flexoki-light/LICENSE) ships with the bundled theme.
+
+## Build release assets
+
+Run `go run ./tools/release v0.0.0-dryrun` from the repo root to build the six archives, `checksums.txt`, Homebrew formula and versioned npm package under `dist/`. Pack the npm package with `npm pack ./dist/npm/0.0.0-dryrun`.
+
+For local testing, set `AGENTS_VIEW_DOWNLOAD_BASE_URL=http://127.0.0.1:8000` on the install script or npm launcher while serving `dist/` with `python3 -m http.server --bind 127.0.0.1 --directory dist 8000`. Both installers read the archives and checksum file directly from that URL. HTTP mirrors are limited to loopback.
+
+Pushing a version tag publishes GitHub release assets through Actions. After the release appears, check out the tag in a clean checkout and run `go run ./tools/release <tag> --publish` to update the Homebrew tap and publish the matching npm package. If npm is signed out, the tool prints the exact command to run after signing in.

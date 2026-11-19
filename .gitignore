@@ -1,1 +1,3 @@
 *.agents-view.lock
+/dist/
+/npm/.cache/
