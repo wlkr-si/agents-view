@@ -1,5 +1,5 @@
 {
-  "name": "agents-view",
+  "name": "@wlkr-si/agents-view",
   "version": "0.0.0",
   "description": "Local editor and source browser for AGENTS.md",
   "bin": {
@@ -11,7 +11,19 @@
     "url": "git+https://github.com/wlkr-si/agents-view.git",
     "directory": "npm"
   },
-  "files": ["bin/agents-view.js"],
-  "os": ["darwin", "linux", "win32"],
-  "cpu": ["arm64", "x64"]
+  "files": [
+    "bin/agents-view.js"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

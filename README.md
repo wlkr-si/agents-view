@@ -10,7 +10,7 @@ Agents View edits your project's `AGENTS.md` like code, in a local browser Edito
 
 ```sh
 brew install wlkr-si/tap/agents-view                  # macOS and Linux
-npx agents-view                                       # or: npm install -g agents-view
+npx @wlkr-si/agents-view                              # or: npm install -g @wlkr-si/agents-view
 curl -fsSL https://raw.githubusercontent.com/wlkr-si/agents-view/main/install.sh | sh
 ```
 
