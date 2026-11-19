@@ -309,7 +309,7 @@ function renderSource(file, entries) {
             );
         }
         const change = button(
-          "Change",
+          "Override",
           () => {
             editing++;
             change.hidden = true;
@@ -337,9 +337,9 @@ function renderSource(file, entries) {
         );
         change.setAttribute(
           "aria-label",
-          `Change line ${index + 1} for this project`,
+          `Override line ${index + 1} for this project`,
         );
-        change.title = "Change for this project";
+        change.title = "Override for this project";
         row.append(change);
       }
       lines.append(row);

@@ -1,7 +1,7 @@
 <!-- agents-view v0 -->
 # agents-view
 
-One plain AGENTS.md serves the agent, CLI, and local editor.
+One plain AGENTS.md serves every agent, the CLI, and the Editor.
 
 ## Rules
 
@@ -11,5 +11,6 @@ One plain AGENTS.md serves the agent, CLI, and local editor.
 
 ## Pages
 
-- [Specification](SPEC.md) — read when changing the format or source discovery.
+- [Glossary](CONTEXT.md) — read when naming anything in code, docs or the Editor.
+- [Specification](SPEC.md) — read when changing the format or how Sources are found.
 - [README](README.md) — read when changing installation or commands.

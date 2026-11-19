@@ -1,6 +1,6 @@
 # agents-view
 
-Edit a plain `AGENTS.md` in your local browser. Project shows the core file. Sources shows the instruction files Claude Code and Codex discover, with project overrides alongside the original lines.
+Edit a plain `AGENTS.md` in the Editor, a local browser screen. The AGENTS.md tab shows the file. Sources shows the instruction files each agent reads, in load order, with each Override beside the Global line it replaces. Terms are defined in [CONTEXT.md](CONTEXT.md).
 
 Requires Git and Node 20 or later.
 
@@ -21,8 +21,8 @@ You can also run `node /path/to/agents-view/dist/cli.js` from the project folder
 | `read [section]` | Print the file or one section |
 | `write <section>` | Read a replacement body from stdin, creating the section if needed |
 | `check` | Report invalid format, broken pointers, stale overrides, and budget warnings |
-| `sources [--agent claude\|codex]` | List paths and approximate tokens in discovery order |
-| `view` | Open the live local editor |
+| `sources [--agent claude\|codex]` | List Sources and approximate tokens in load order |
+| `view` | Open the Editor |
 
 Diagram changes go to `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use a different local command that reads its prompt from stdin. Mermaid rendering needs access to jsDelivr.
 
