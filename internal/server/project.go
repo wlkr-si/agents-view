@@ -15,12 +15,13 @@ import (
 )
 
 type section struct {
-	Name   string               `json:"name"`
-	Type   document.SectionType `json:"type"`
-	Line   int                  `json:"line"`
-	Tokens int                  `json:"tokens"`
-	HTML   string               `json:"html,omitempty"`
-	Pages  []pageEntry          `json:"pages,omitempty"`
+	Name         string               `json:"name"`
+	Type         document.SectionType `json:"type"`
+	Line         int                  `json:"line"`
+	Tokens       int                  `json:"tokens"`
+	HTML         string               `json:"html,omitempty"`
+	Pages        []pageEntry          `json:"pages,omitempty"`
+	DiagramTexts []string             `json:"diagramTexts,omitempty"`
 }
 
 type pageEntry struct {
@@ -103,7 +104,10 @@ func (editor *editor) describe(text string) preview {
 	offset, line := 0, 1
 	for _, current := range doc.Sections {
 		start := current.Start - len(current.Heading)
-		item := section{Name: current.DisplayName(), Type: current.Type, Tokens: current.Tokens}
+		item := section{
+			Name: current.DisplayName(), Type: current.Type, Tokens: current.Tokens,
+			DiagramTexts: current.DiagramTexts,
+		}
 		// Intro starts at the version line. All other sections start at their heading.
 		if current.Heading != "" {
 			item.Line = line + strings.Count(text[offset:start], "\n")

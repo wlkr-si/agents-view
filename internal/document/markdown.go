@@ -13,6 +13,7 @@ type markdownItem struct {
 	start, end, depth, heading int
 	diagram, bullet            bool
 	inline, reference          string
+	diagramText                string
 }
 
 type markdownLine struct {
@@ -105,6 +106,7 @@ func (parser markdownParser) parse(start, end, indent, depth int) int {
 		}
 		if marker, count, info := fence(line.text); count != 0 {
 			item.diagram = TrimSpace(info) == "mermaid"
+			var diagramText strings.Builder
 			index++
 			for index < end {
 				next := lines[index]
@@ -116,7 +118,15 @@ func (parser markdownParser) parse(start, end, indent, depth int) int {
 					asciiTrim(strings.TrimLeft(next.text, string(marker))) == "" {
 					break
 				}
+				if item.diagram {
+					if next.text != "" {
+						diagramText.WriteString(strings.Repeat(" ", max(0, next.indent-line.indent)))
+						diagramText.WriteString(next.text)
+					}
+					diagramText.WriteByte('\n')
+				}
 			}
+			item.diagramText = diagramText.String()
 			parser.emit(item)
 			continue
 		}
