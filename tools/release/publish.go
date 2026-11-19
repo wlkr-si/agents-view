@@ -128,7 +128,7 @@ func publish(work, tag string, assets []string, sums map[string]string, npmDir s
 	}
 
 	if ci {
-		fmt.Println("GitHub Actions publishes release assets only. Skipping the Homebrew tap push and npm publish.")
+		fmt.Println("GitHub Actions: the next step publishes npm through trusted publishing; the Homebrew tap follows the release on its own.")
 		return nil
 	}
 	if err := publishTap(work, tag); err != nil {

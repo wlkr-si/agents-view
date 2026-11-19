@@ -1,7 +1,11 @@
 # Releasing
 
-1. Tag `main` with the version and push the tag: `git tag v0.1.0 && git push origin v0.1.0`. Actions builds the six archives and `checksums.txt` and publishes the GitHub release.
-2. When the release appears, run `go run ./tools/release v0.1.0 --publish` from a clean checkout of the tag. It updates `wlkr-si/homebrew-tap` and publishes the npm package. If npm is signed out, it prints the command to run after signing in.
+Tag `main` with the version and push the tag: `git tag v0.1.1 && git push origin v0.1.1`. That is the whole release:
+
+- Actions builds the six archives and `checksums.txt`, publishes the GitHub release, and publishes `@wlkr-si/agents-view` to npm through npm trusted publishing (no token).
+- `wlkr-si/homebrew-tap` checks for a new release every hour and updates its formula on its own. Run its `agents-view` workflow to update it right away.
+
+`go run ./tools/release <tag> --publish` from a clean checkout of the tag does the same from a Mac, using your own `gh` and npm sign-ins.
 
 ## Dry run
 
