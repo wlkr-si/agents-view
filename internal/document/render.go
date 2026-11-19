@@ -81,7 +81,11 @@ func renderBlocks(output *strings.Builder, lines []string, depth int, tight bool
 }
 
 func renderFence(output *strings.Builder, lines []string, index, indent int, marker byte, count int, info string) int {
-	output.WriteString("<pre><code")
+	if TrimSpace(info) == "mermaid" {
+		output.WriteString("<pre data-diagram-text><code")
+	} else {
+		output.WriteString("<pre><code")
+	}
 	if words := strings.Fields(info); len(words) > 0 {
 		fmt.Fprintf(output, " class=\"language-%s\"", html.EscapeString(words[0]))
 	}

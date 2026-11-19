@@ -22,7 +22,8 @@ let groups = [], readers = {}, agent = "claude", globals = [];
 const tabs = new Map();
 let active = "", inlineOverride;
 let caret = { line: 1, col: 1 }, section, overrides = [], problems = [];
-let panel = "preview", panelOpen = true, panelHTML = "", job = "", previewTimer;
+let panel = "preview", panelOpen = true, panelHTML = "", previewTimer;
+let diagramFrame, diagramReady = false, sentDiagram;
 
 const dirty = () => Boolean(base && base.text !== text.value);
 const blocked = () => Boolean(outside || missing);
@@ -310,6 +311,8 @@ function drawPanel() {
   $("problem-count").textContent = problems.length || "";
   $("preview").hidden = panel !== "preview";
   $("problems").hidden = panel !== "problems";
+  const diagram = panelOpen && panel === "preview" && !active && section?.type === "diagram" ? section : null;
+  drawDiagram(diagram);
   if (!panelOpen) return;
   $("panel-section").textContent = panel === "preview" && section ? section.name : "";
   if (panel === "problems") {
@@ -332,22 +335,62 @@ function drawPanel() {
       esc(page.name), button("line", page.line, esc(page.path), 'class="link"'), esc(page.note),
       page.exists ? '<span class="add">✓ exists</span>' : '<span class="warn">✗ missing</span>',
     ]));
-  } else if (section) {
+  } else if (section && (section.type !== "diagram" || diagram)) {
     html = section.html || "";
-    if (section.type === "diagram") {
-      html += `<form data-form="diagram" data-section="${esc(section.name)}">
-        <input name="change" aria-label="Describe a diagram change" placeholder="describe a change → local agent command" required>
-        <button>Request</button>
-      </form><output id="job" role="status"></output>`;
-    }
   }
   if (html !== panelHTML) {
     panelHTML = html;
-    $("preview").innerHTML = html;
+    $("preview-details").innerHTML = html;
     $("preview").scrollTop = 0;
   }
-  if ($("job")) $("job").textContent = job;
 }
+
+function drawDiagram(section) {
+  const preview = $("diagram-preview");
+  preview.hidden = !section;
+  $("preview-details").classList.toggle("diagram-notes", Boolean(section));
+  if (!section) return;
+  const form = preview.querySelector("form");
+  if (form.dataset.section !== section.name) {
+    form.dataset.section = section.name;
+    form.reset();
+  }
+  if (!diagramFrame) {
+    diagramFrame = document.createElement("iframe");
+    diagramFrame.title = "Diagram";
+    diagramFrame.setAttribute("sandbox", "allow-scripts");
+    diagramFrame.height = "0";
+    diagramFrame.src = "/diagram";
+    diagramFrame.addEventListener("load", () => {
+      diagramReady = true;
+      sentDiagram = undefined;
+      sendDiagram();
+    });
+    preview.append(diagramFrame);
+  }
+  sendDiagram();
+}
+
+function sendDiagram() {
+  if (!diagramReady || $("diagram-preview").hidden) return;
+  const css = getComputedStyle(document.documentElement);
+  const colors = ["dark-background", "lighter-background", "foreground", "accent", "orange"]
+    .map((color) => css.getPropertyValue(`--${color}`).trim());
+  if (colors.some((color) => !color)) return;
+  const data = { texts: section.diagramTexts, colors, dark: css.colorScheme === "dark" };
+  const key = JSON.stringify(data);
+  if (key === sentDiagram) return;
+  sentDiagram = key;
+  diagramFrame.contentWindow.postMessage(data, "*");
+}
+
+window.addEventListener("message", ({ source, origin, data }) => {
+  if (!diagramFrame || source !== diagramFrame.contentWindow || origin !== "null" ||
+      !Number.isFinite(data?.height)) return;
+  diagramFrame.height = String(Math.min(32768, Math.max(0, Math.ceil(data.height))));
+});
+$("theme-stylesheet").addEventListener("load", sendDiagram);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", sendDiagram);
 
 let sourceHTML = "";
 function drawSource() {
@@ -589,7 +632,6 @@ const events = new EventSource("/events");
 events.addEventListener("open", refresh);
 events.addEventListener("change", refresh);
 events.addEventListener("job", (event) => {
-  job = JSON.parse(event.data);
-  if ($("job")) $("job").textContent = job;
+  $("job").textContent = JSON.parse(event.data);
 });
 void refresh();

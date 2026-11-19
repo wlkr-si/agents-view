@@ -26,11 +26,13 @@ const (
 )
 
 var assets = map[string]struct{ name, contentType string }{
-	"/":          {"index.html", "text/html"},
-	"/app.js":    {"app.js", "text/javascript"},
-	"/syntax.js": {"syntax.js", "text/javascript"},
-	"/style.css": {"style.css", "text/css"},
-	"/theme.js":  {"theme.js", "text/javascript"},
+	"/":           {"index.html", "text/html"},
+	"/app.js":     {"app.js", "text/javascript"},
+	"/syntax.js":  {"syntax.js", "text/javascript"},
+	"/style.css":  {"style.css", "text/css"},
+	"/theme.js":   {"theme.js", "text/javascript"},
+	"/diagram":    {"diagram.html", "text/html"},
+	"/diagram.js": {"diagram.js", "text/javascript"},
 }
 
 type Source struct {
@@ -134,15 +136,27 @@ func (editor *editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	var err error
 	switch r.Method {
+	case http.MethodHead:
+		if path != mermaidPath {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		fallthrough
 	case http.MethodGet:
 		if asset, ok := assets[path]; ok {
-			h.Set("Content-Security-Policy", editorPolicy)
+			policy := editorPolicy
+			if path == "/diagram" {
+				policy = diagramPolicy(origin)
+			}
+			h.Set("Content-Security-Policy", policy)
 			h.Set("Content-Type", asset.contentType+"; charset=utf-8")
 			raw, _ := web.Files.ReadFile(asset.name)
 			_, _ = w.Write(raw)
 			return
 		}
 		switch {
+		case path == mermaidPath:
+			serveMermaid(w, r)
 		case path == "/theme.css":
 			editor.themeCSS(w)
 		case path == "/theme":

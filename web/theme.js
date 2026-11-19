@@ -1,5 +1,5 @@
 const trigger = document.querySelector("#theme");
-const stylesheet = document.querySelector('link[href="/theme.css"]');
+const stylesheet = document.getElementById("theme-stylesheet");
 const picker = document.createElement("dialog");
 picker.id = "theme-picker";
 picker.setAttribute("aria-labelledby", "theme-title");

@@ -1,16 +1,43 @@
 package server
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/wlkr-si/agents-view/internal/document"
+	"github.com/wlkr-si/agents-view/web"
 )
+
+const mermaidPath = "/mermaid-11.12.2.min.js"
+
+func diagramPolicy(origin string) string {
+	return "default-src 'none'; sandbox allow-scripts; script-src " + origin + "/diagram.js " + origin + mermaidPath +
+		"; style-src 'unsafe-inline'; img-src data:; frame-ancestors " + origin + "; base-uri 'none'; form-action 'none'"
+}
+
+var mermaidETag = sync.OnceValue(func() string {
+	return fmt.Sprintf(`"%x"`, sha256.Sum256([]byte(web.MermaidGzip)))
+})
+
+func serveMermaid(w http.ResponseWriter, r *http.Request) {
+	h := w.Header()
+	h.Set("Cache-Control", "public, max-age=31536000, immutable")
+	h.Set("Content-Type", "text/javascript; charset=utf-8")
+	h.Set("Content-Encoding", "gzip")
+	h.Set("ETag", mermaidETag())
+	h.Set("Content-Length", strconv.Itoa(len(web.MermaidGzip)))
+	http.ServeContent(w, r, mermaidPath, time.Time{}, strings.NewReader(web.MermaidGzip))
+}
 
 type diagramEdit struct {
 	Name, Change string
