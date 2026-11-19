@@ -46,6 +46,7 @@ type project struct {
 	Text     string `json:"text"`
 	Revision string `json:"revision"`
 	File     string `json:"file"`
+	Home     string `json:"home"`
 	preview
 }
 
@@ -59,7 +60,8 @@ func (editor *editor) readProject() (project, error) {
 
 func (editor *editor) projectFrom(raw string) project {
 	text := strings.ReplaceAll(document.DecodeUTF8([]byte(raw)), "\r\n", "\n")
-	return project{text, document.Revision(raw), editor.file, editor.describe(text)}
+	home, _ := os.UserHomeDir()
+	return project{text, document.Revision(raw), editor.file, home, editor.describe(text)}
 }
 
 func (editor *editor) project(w http.ResponseWriter) error {
@@ -171,7 +173,7 @@ func (editor *editor) saveOverride(edit overrideEdit) (any, error) {
 				continue
 			}
 			for line := range strings.SplitSeq(strings.ReplaceAll(file.Text, "\r\n", "\n"), "\n") {
-				found = found || line == edit.Quote
+				found = found || strings.Contains(line, edit.Quote)
 			}
 		}
 	}

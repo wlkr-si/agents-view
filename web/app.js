@@ -9,6 +9,7 @@ const selected = "aria-current";
 const icons = { text: "¶", rules: "≡", pages: "↗", diagram: "◇", overrides: "≡" };
 const split = (value) => value.replaceAll("\r\n", "\n").split("\n");
 const short = (path) => path.split("/").at(-1);
+const tilde = (path) => base?.home && path.startsWith(`${base.home}/`) ? `~${path.slice(base.home.length)}` : path;
 const sourceKey = (file) => `${file.origin}:${file.path}`;
 const button = (action, value, label, attrs = "") =>
   `<button type="button" data-${action}="${esc(value)}" ${attrs}>${label}</button>`;
@@ -360,7 +361,7 @@ function drawSource() {
     <input id="replacement" name="replacement" spellcheck="false" aria-label="Replacement" required>
     <button>Save</button>
   </form>`;
-  const heading = [file.path, file.origin, file.onDemand && "on demand", `~${file.tokens} tok`,
+  const heading = [tilde(file.path), file.origin, file.onDemand && "on demand", `~${file.tokens} tok`,
     file.unavailable && "Unavailable"].filter(Boolean).join(" · ");
   const html = `<div class="source-heading" title="${esc(heading)}">${esc(heading)}</div>` +
     syntax(rows).map(({ html, rule }, index) => {
@@ -525,7 +526,7 @@ document.addEventListener("click", (event) => {
   } else if (data.override) {
     const file = tabs.get(active);
     const line = Number(data.override);
-    inlineOverride = { key: active, line, quote: split(file.text)[line - 1] };
+    inlineOverride = { key: active, line, quote: split(file.text)[line - 1].replace(/^\s*(?:[-*+]|\d+[.)])\s+/, "") };
     drawSource();
     $("replacement")?.focus();
   } else if (data.match) choose(Number(data.match));
