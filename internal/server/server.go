@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/wlkr-si/agents-view/internal/document"
+	"github.com/wlkr-si/agents-view/internal/sources"
 	"github.com/wlkr-si/agents-view/web"
 )
 
@@ -224,8 +225,9 @@ type sourceGroup struct {
 }
 
 func (editor *editor) sources() ([]sourceGroup, error) {
-	groups := make([]sourceGroup, 0, 2)
-	for _, agent := range []string{"claude", "codex"} {
+	ids := sources.IDs()
+	groups := make([]sourceGroup, 0, len(ids))
+	for _, agent := range ids {
 		files, err := editor.findSources(editor.dir, agent)
 		if err != nil {
 			return nil, err
