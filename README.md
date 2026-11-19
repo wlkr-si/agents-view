@@ -21,9 +21,9 @@ You can also run `node /path/to/agents-view/dist/cli.js` from the project folder
 | `read [section]` | Print the file or one section |
 | `write <section>` | Read a replacement body from stdin, creating the section if needed |
 | `check` | Report invalid format, broken pointers, stale overrides, and budget warnings |
-| `sources [--agent claude\|codex]` | List Sources and approximate tokens in load order |
+| `sources [--agent claude\|codex\|opencode\|gemini\|cursor\|copilot]` | List Sources and approximate tokens in load order |
 | `view` | Open the Editor |
 
 Diagram changes go to `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use a different local command that reads its prompt from stdin. Mermaid rendering needs access to jsDelivr.
 
-The Sources view covers the v0 file conventions in [SPEC.md](SPEC.md). It estimates whole-file tokens and labels Claude's on-demand nested files.
+The Sources view covers the v0 file conventions in [SPEC.md](SPEC.md). It estimates whole-file tokens and labels on-demand Nested files.
