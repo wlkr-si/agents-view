@@ -1,0 +1,39 @@
+# frozen_string_literal: true
+
+# Installs the published Agents View binary for the current OS and CPU.
+class AgentsView < Formula
+  desc "Local editor and source browser for AGENTS.md"
+  homepage "https://github.com/wlkr-si/agents-view"
+  version "{{.Version}}"
+  license "MIT"
+
+  on_macos do
+    on_arm do
+      url "{{.Base}}/{{.DarwinARM.Name}}"
+      sha256 "{{.DarwinARM.SHA}}"
+    end
+    on_intel do
+      url "{{.Base}}/{{.DarwinIntel.Name}}"
+      sha256 "{{.DarwinIntel.SHA}}"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "{{.Base}}/{{.LinuxARM.Name}}"
+      sha256 "{{.LinuxARM.SHA}}"
+    end
+    on_intel do
+      url "{{.Base}}/{{.LinuxIntel.Name}}"
+      sha256 "{{.LinuxIntel.SHA}}"
+    end
+  end
+
+  def install
+    bin.install "agents-view"
+  end
+
+  test do
+    assert_equal "agents-view v#{version}", shell_output("#{bin}/agents-view --version").strip
+  end
+end
