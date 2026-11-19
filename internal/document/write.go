@@ -2,6 +2,8 @@ package document
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,32 +18,85 @@ func Update(file, name, replacement string, expected *string, appendBody bool) e
 		return fmt.Errorf("A section body cannot include another level-two heading.")
 	}
 
+	_, err := updateFile(file, nil, func(text string) (string, error) {
+		return updateSection(text, name, replacement, expected, appendBody)
+	})
+	return err
+}
+
+// Revision identifies the exact bytes read from disk, including line endings.
+func Revision(text string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(text)))
+}
+
+var ErrChanged = errors.New("AGENTS.md changed on disk.")
+
+func Save(file, text, revision string) (string, error) {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	doc := Parse(text)
+	if !doc.HasVersion {
+		return "", fmt.Errorf("Missing first-line %s tag.", Version)
+	}
+	names := make(map[string]bool, len(doc.Sections))
+	for _, section := range doc.Sections {
+		name := section.DisplayName()
+		if names[name] {
+			return "", fmt.Errorf("Duplicate or reserved section name: %s", name)
+		}
+		names[name] = true
+	}
+	return updateFile(file, &revision, func(current string) (string, error) {
+		if strings.Contains(current, "\r\n") {
+			return strings.ReplaceAll(text, "\n", "\r\n"), nil
+		}
+		return text, nil
+	})
+}
+
+func AddOverride(file, quote, replacement, revision string) (string, error) {
+	return updateFile(file, &revision, func(text string) (string, error) {
+		return updateSection(text, "Overrides", "- Global: "+quote+" → here: "+replacement, nil, true)
+	})
+}
+
+func updateFile(file string, revision *string, update func(string) (string, error)) (string, error) {
 	target, err := filepath.EvalSymlinks(file)
 	if err != nil {
-		return FileError("lstat", err)
+		return "", FileError("lstat", err)
 	}
 	lockPath := target + ".agents-view.lock"
 	lock, err := os.OpenFile(lockPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
-		return FileError("open", err)
+		return "", FileError("open", err)
 	}
 	defer os.Remove(lockPath)
 	if err := lock.Close(); err != nil {
-		return FileError("close", err)
+		return "", FileError("close", err)
 	}
 
 	raw, err := os.ReadFile(target)
 	if err != nil {
-		return FileError("open", err)
+		return "", FileError("open", err)
 	}
 	text := string(raw)
+	if revision != nil && Revision(text) != *revision {
+		return "", ErrChanged
+	}
+	next, err := update(text)
+	if err != nil || next == text {
+		return next, err
+	}
+	return next, replaceFile(target, next, text)
+}
+
+func updateSection(text, name, replacement string, expected *string, appendBody bool) (string, error) {
 	document := Parse(text)
 	current, err := document.FindSection(name)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if expected != nil && (current == nil || current.Body != *expected) {
-		return fmt.Errorf("The section changed on disk. Edit it again using the latest version.")
+		return "", fmt.Errorf("The section changed on disk. Edit it again using the latest version.")
 	}
 	eol := "\n"
 	if strings.Contains(text, "\r\n") {
@@ -80,12 +135,12 @@ func Update(file, name, replacement string, expected *string, appendBody bool) e
 		next = before + body + eol + after
 	}
 	if next == text {
-		return nil
+		return text, nil
 	}
 	if !sameStructure(document, Parse(next), current == nil, name) {
-		return fmt.Errorf("The edit changes the document structure. Check headings, comments, and code fences.")
+		return "", fmt.Errorf("The edit changes the document structure. Check headings, comments, and code fences.")
 	}
-	return replaceFile(target, next)
+	return next, nil
 }
 
 func sameStructure(before, after Document, created bool, name string) bool {
@@ -104,7 +159,7 @@ func sameStructure(before, after Document, created bool, name string) bool {
 	return !created || after.Sections[count-1].Name == name
 }
 
-func replaceFile(target, text string) error {
+func replaceFile(target, text, expected string) error {
 	info, err := os.Stat(target)
 	if err != nil {
 		return FileError("stat", err)
@@ -129,6 +184,13 @@ func replaceFile(target, text string) error {
 	}
 	if closeErr != nil {
 		return FileError("close", closeErr)
+	}
+	current, err := os.ReadFile(target)
+	if err != nil {
+		return err
+	}
+	if string(current) != expected {
+		return ErrChanged
 	}
 	if err := os.Rename(path, target); err != nil {
 		return FileError("rename", err)

@@ -35,7 +35,7 @@ Run `agents-view` from the project folder to edit its `AGENTS.md`. The Editor li
 
 Diagram changes go to `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use a different local command that reads its prompt from stdin. The Editor shows Mermaid diagram text offline.
 
-The Sources tab shows Sources for Claude Code and Codex. The CLI also lists Sources for OpenCode, Gemini CLI, Cursor, and GitHub Copilot. See [SPEC.md](SPEC.md).
+The Editor lists local Sources for Claude Code, Codex, OpenCode, Gemini CLI, Cursor, and GitHub Copilot. Use ⌘S or Ctrl+S to save, ⌘P or Ctrl+P to jump to a section or Source, and ⌘J or Ctrl+J to toggle Preview and Problems. See [SPEC.md](SPEC.md) for load order.
 
 ## Editor themes
 

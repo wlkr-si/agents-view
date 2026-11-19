@@ -48,7 +48,7 @@ func (d *discovery) openCodeProject() {
 			add(dir, Project)
 		}
 	}
-	d.openCodeInstructions(false, d.nested)
+	d.openCodeInstructions(false, d.fetchURLs)
 	if os.Getenv("OPENCODE_DISABLE_PROJECT_CONFIG") != "1" {
 		d.descendants(d.dir, func(dir string) { add(dir, Nested) })
 	}

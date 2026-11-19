@@ -1,18 +1,15 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"mime"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -25,24 +22,24 @@ import (
 
 const (
 	editorPolicy = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
-	editLimit    = 256_000
+	editLimit    = 2 * 1024 * 1024 // JSON can expand characters in the buffer.
 )
 
 var assets = map[string]struct{ name, contentType string }{
-	"/":           {"index.html", "text/html"},
-	"/theme.js":   {"theme.js", "text/javascript"},
-	"/app.js":     {"app.js", "text/javascript"},
-	"/style.css":  {"style.css", "text/css"},
-	"/diagram":    {"diagram.html", "text/html"},
-	"/diagram.js": {"diagram.js", "text/javascript"},
+	"/":          {"index.html", "text/html"},
+	"/app.js":    {"app.js", "text/javascript"},
+	"/syntax.js": {"syntax.js", "text/javascript"},
+	"/style.css": {"style.css", "text/css"},
+	"/theme.js":  {"theme.js", "text/javascript"},
 }
 
 type Source struct {
-	Path   string `json:"path"`
-	Origin string `json:"origin"`
-	Text   string `json:"text"`
-	Via    string `json:"via,omitempty"`
-	Tokens int    `json:"tokens"`
+	Path     string `json:"path"`
+	Origin   string `json:"origin"`
+	Text     string `json:"text"`
+	Via      string `json:"via,omitempty"`
+	Tokens   int    `json:"tokens"`
+	OnDemand bool   `json:"onDemand,omitempty"`
 }
 
 type FindSources func(dir, agent string) ([]Source, error)
@@ -60,6 +57,10 @@ type editor struct {
 
 // Serve publishes the Editor address once the listener has bound.
 func Serve(ctx context.Context, dir string, findSources FindSources, ready func(string)) error {
+	dir, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		return err
+	}
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		return err
@@ -135,12 +136,7 @@ func (editor *editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		if asset, ok := assets[path]; ok {
-			policy := editorPolicy
-			if path == "/diagram" {
-				policy = "sandbox allow-scripts; default-src 'none'; script-src " + origin +
-					"; style-src 'unsafe-inline'; frame-ancestors " + origin
-			}
-			h.Set("Content-Security-Policy", policy)
+			h.Set("Content-Security-Policy", editorPolicy)
 			h.Set("Content-Type", asset.contentType+"; charset=utf-8")
 			raw, _ := web.Files.ReadFile(asset.name)
 			_, _ = w.Write(raw)
@@ -170,12 +166,16 @@ func (editor *editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		switch path {
 		case "/theme":
 			err = editor.editTheme(w, r)
-		case "/section":
-			err = edit(w, r, editor.saveSection)
+		case "/project":
+			err = edit(w, r, editor.saveProject)
+		case "/preview":
+			err = edit(w, r, editor.preview)
 		case "/override":
 			err = edit(w, r, editor.saveOverride)
 		case "/diagram":
-			err = edit(w, r, editor.changeDiagram)
+			err = edit(w, r, func(data diagramEdit) (any, error) {
+				return nil, editor.changeDiagram(data)
+			})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -183,7 +183,11 @@ func (editor *editor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		status := http.StatusBadRequest
+		if errors.Is(err, document.ErrChanged) || errors.Is(err, os.ErrNotExist) {
+			status = http.StatusConflict
+		}
+		writeJSON(w, status, map[string]string{"error": err.Error()})
 	}
 }
 
@@ -191,50 +195,6 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(value)
-}
-
-type section struct {
-	Name   string               `json:"name"`
-	Type   document.SectionType `json:"type"`
-	Body   string               `json:"body"`
-	Tokens int                  `json:"tokens"`
-	HTML   string               `json:"html"`
-}
-
-var projectHeading = regexp.MustCompile(`(?m)^#[ \t]+(.+?)\r?$`)
-
-func (editor *editor) readDocument() (document.Document, error) {
-	body, err := document.ReadFile(editor.file)
-	if err != nil {
-		return document.Document{}, err
-	}
-	return document.Parse(body), nil
-}
-
-func (editor *editor) project(w http.ResponseWriter) error {
-	doc, err := editor.readDocument()
-	if err != nil {
-		return err
-	}
-	name := filepath.Base(editor.dir)
-	if heading := projectHeading.FindStringSubmatch(doc.Sections[0].Body); heading != nil {
-		name = heading[1]
-	}
-	sections := make([]section, 0, len(doc.Sections))
-	for _, item := range doc.Sections {
-		sections = append(sections, section{
-			Name: item.DisplayName(), Type: item.Type, Body: item.Body,
-			Tokens: item.Tokens, HTML: document.RenderHTML(item.Body),
-		})
-	}
-	writeJSON(w, http.StatusOK, struct {
-		Project        string    `json:"project"`
-		Directory      string    `json:"directory"`
-		Tokens         int       `json:"tokens"`
-		MermaidVersion string    `json:"mermaidVersion"`
-		Sections       []section `json:"sections"`
-	}{name, editor.dir, doc.Tokens, "11.12.2", sections})
-	return nil
 }
 
 type sourceGroup struct {
@@ -263,50 +223,22 @@ func (editor *editor) sources() ([]sourceGroup, error) {
 }
 
 func (editor *editor) writeSources(w http.ResponseWriter) error {
-	doc, err := editor.readDocument()
-	if err != nil {
-		return err
-	}
-	entries, err := doc.OverrideEntries()
-	if err != nil {
-		return err
-	}
 	groups, err := editor.sources()
 	if err != nil {
 		return err
 	}
-	type override struct {
-		Line        string `json:"line"`
-		Quote       string `json:"quote"`
-		Replacement string `json:"replacement"`
-		Stale       bool   `json:"stale"`
-	}
-	overrides := make([]override, 0, len(entries))
-	for _, entry := range entries {
-		found := entry.Quote != "" && hasGlobal(groups, func(text string) bool {
-			return strings.Contains(text, entry.Quote)
-		})
-		overrides = append(overrides, override{entry.Line, entry.Quote, entry.Replacement, !found})
+	readers, err := sources.Readers(editor.dir)
+	if err != nil {
+		return err
 	}
 	writeJSON(w, http.StatusOK, struct {
-		Groups    []sourceGroup `json:"groups"`
-		Overrides []override    `json:"overrides"`
-	}{groups, overrides})
+		Groups  []sourceGroup   `json:"groups"`
+		Readers map[string]bool `json:"readers"`
+	}{groups, readers})
 	return nil
 }
 
-func hasGlobal(groups []sourceGroup, match func(string) bool) bool {
-	for _, group := range groups {
-		for _, source := range group.Files {
-			if source.Origin == "Global" && match(source.Text) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func edit[T any](w http.ResponseWriter, r *http.Request, save func(T) error) error {
+func edit[T any](w http.ResponseWriter, r *http.Request, handle func(T) (any, error)) error {
 	media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil || media != "application/json" {
 		return errors.New("Expected JSON.")
@@ -315,7 +247,7 @@ func edit[T any](w http.ResponseWriter, r *http.Request, save func(T) error) err
 	if err != nil {
 		var tooLarge *http.MaxBytesError
 		if errors.As(err, &tooLarge) {
-			return errors.New("Edit exceeds 256 KB.")
+			return errors.New("Edit exceeds 2 MiB.")
 		}
 		return err
 	}
@@ -323,67 +255,13 @@ func edit[T any](w http.ResponseWriter, r *http.Request, save func(T) error) err
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return err
 	}
-	if err := save(data); err != nil {
+	value, err := handle(data)
+	if err != nil {
 		return err
 	}
-	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	if value == nil {
+		value = map[string]bool{"ok": true}
+	}
+	writeJSON(w, http.StatusOK, value)
 	return nil
-}
-
-type sectionEdit struct {
-	Name, Body, Expected *string
-}
-
-func (editor *editor) saveSection(edit sectionEdit) error {
-	if edit.Name == nil || edit.Body == nil || edit.Expected == nil {
-		return errors.New("Invalid section edit.")
-	}
-	current, err := editor.findSection(*edit.Name)
-	if err != nil {
-		return err
-	}
-	if current == nil || current.Type == document.Diagram {
-		return errors.New("Choose an editable section.")
-	}
-	return document.Update(editor.file, *edit.Name, *edit.Body, edit.Expected, false)
-}
-
-func (editor *editor) findSection(name string) (*document.Section, error) {
-	doc, err := editor.readDocument()
-	if err != nil {
-		return nil, err
-	}
-	return doc.FindSection(name)
-}
-
-type overrideEdit struct {
-	Quote, Replacement string
-}
-
-func (editor *editor) saveOverride(edit overrideEdit) error {
-	replacement := document.TrimSpace(edit.Replacement)
-	if document.TrimSpace(edit.Quote) == "" || replacement == "" ||
-		strings.ContainsAny(edit.Quote+edit.Replacement, "\r\n") {
-		return errors.New("Use one line for the quote and replacement.")
-	}
-	groups, err := editor.sources()
-	if err != nil {
-		return err
-	}
-	if !hasGlobal(groups, func(text string) bool {
-		for _, line := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
-			if line == edit.Quote {
-				return true
-			}
-		}
-		return false
-	}) {
-		return errors.New("The global line changed on disk.")
-	}
-	var quote bytes.Buffer
-	encoder := json.NewEncoder(&quote)
-	encoder.SetEscapeHTML(false)
-	_ = encoder.Encode(edit.Quote)
-	body := fmt.Sprintf("- Global: %s → here: %s", strings.TrimSuffix(quote.String(), "\n"), replacement)
-	return document.Update(editor.file, "Overrides", body, nil, true)
 }

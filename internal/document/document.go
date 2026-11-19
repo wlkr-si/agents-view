@@ -176,11 +176,16 @@ func (document Document) FindSection(name string) (*Section, error) {
 
 type Page struct {
 	Name, Href, Note string
+	Line             int // Zero-based line within the section body.
 }
 
 func PageEntries(body string) []Page {
 	var pages []Page
-	for _, line := range nonemptyLines(body) {
+	for index, line := range strings.Split(body, "\n") {
+		line = strings.TrimSuffix(line, "\r")
+		if TrimSpace(line) == "" {
+			continue
+		}
 		match := pageLine.FindStringSubmatch(line)
 		if match == nil {
 			return nil
@@ -189,6 +194,7 @@ func PageEntries(body string) []Page {
 			Name: match[1],
 			Href: strings.TrimSuffix(strings.TrimPrefix(match[2], "<"), ">"),
 			Note: match[3],
+			Line: index,
 		})
 	}
 	return pages
@@ -196,6 +202,7 @@ func PageEntries(body string) []Page {
 
 type Override struct {
 	Line, Quote, Replacement string
+	Index                    int // Zero-based line within the section body.
 	matched                  bool
 }
 
@@ -209,8 +216,12 @@ func (document Document) OverrideEntries() ([]Override, error) {
 
 func overrideEntries(body string) []Override {
 	var entries []Override
-	for _, line := range nonemptyLines(body) {
-		entry := Override{Line: line}
+	for index, line := range strings.Split(body, "\n") {
+		line = strings.TrimSuffix(line, "\r")
+		if TrimSpace(line) == "" {
+			continue
+		}
+		entry := Override{Line: line, Index: index}
 		match := overrideLine.FindStringSubmatch(line)
 		if match == nil {
 			match = literalOverrideLine.FindStringSubmatch(line)
@@ -226,18 +237,4 @@ func overrideEntries(body string) []Override {
 		entries = append(entries, entry)
 	}
 	return entries
-}
-
-func nonemptyLines(body string) []string {
-	lines := strings.Split(body, "\n")
-	nonempty := lines[:0]
-	for index, line := range lines {
-		if index < len(lines)-1 {
-			line = strings.TrimSuffix(line, "\r")
-		}
-		if TrimSpace(line) != "" {
-			nonempty = append(nonempty, line)
-		}
-	}
-	return nonempty
 }
