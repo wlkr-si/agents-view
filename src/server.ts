@@ -356,7 +356,7 @@ export async function serve(cwd: string, file: string, open: boolean) {
   }
   process.once("SIGINT", stop);
   process.once("SIGTERM", stop);
-  server.listen(0, "127.0.0.1", () => {
+  server.listen(Number(process.env.AGENTS_VIEW_PORT) || 0, "127.0.0.1", () => {
     const address = server.address();
     if (!address || typeof address === "string") return;
     origin = `http://127.0.0.1:${address.port}`;
