@@ -316,6 +316,11 @@ export async function serve(cwd: string, file: string, open: boolean) {
   const watchers = new Map<string, ReturnType<typeof watch>>();
   const watchedFiles = new Set<string>();
   function watchFile(path: string) {
+    watchPath(path);
+    const target = realpathSync(path);
+    if (target !== path) watchPath(target);
+  }
+  function watchPath(path: string) {
     watchedFiles.add(path);
     const directory = dirname(path);
     if (watchers.has(directory)) return;
