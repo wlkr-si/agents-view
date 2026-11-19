@@ -2,6 +2,15 @@
 
 Edit a plain `AGENTS.md` in the Editor, a local browser screen. The AGENTS.md tab shows the file. Sources shows the instruction files each agent reads, in load order, with each Override beside the Global line it replaces. Terms are defined in [CONTEXT.md](CONTEXT.md).
 
+## Promise
+
+- The Editor's own files are under 20 KB gzipped. Diagrams load only when one is on screen.
+- The Editor answers in under 50 ms after launch.
+- One binary under 10 MB, with no runtime to install.
+- No network calls on its own: no analytics, no update checks, no downloads. `theme add` fetches only the link you give it.
+
+Every change runs `go run ./tools/budget`, which fails when a number is broken.
+
 Requires Go 1.24 or later to build. The Editor is embedded in the binary.
 
 ```sh
