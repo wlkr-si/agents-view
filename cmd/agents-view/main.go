@@ -8,13 +8,15 @@ import (
 
 	"github.com/wlkr-si/agents-view/internal/check"
 	"github.com/wlkr-si/agents-view/internal/document"
+	"github.com/wlkr-si/agents-view/internal/sources"
 )
 
 const usage = `agents-view [--no-open]
 agents-view sections
 agents-view read [section]
 agents-view write <section> < body.md
-agents-view check`
+agents-view check
+agents-view sources [--agent claude|codex|opencode|gemini|cursor|copilot]`
 
 func main() {
 	code, err := run(os.Args[1:])
@@ -51,6 +53,10 @@ func run(args []string) (int, error) {
 		if len(args) != 1 {
 			return 1, errors.New(usage)
 		}
+	case "sources":
+		if len(args) != 0 && (len(args) != 2 || args[0] != "--agent") {
+			return 1, errors.New(usage)
+		}
 	default:
 		return 1, errors.New(usage)
 	}
@@ -66,6 +72,21 @@ func run(args []string) (int, error) {
 	}
 	if command == "view" {
 		return 0, openEditor(cwd, len(args) == 0)
+	}
+	if command == "sources" {
+		agent := "claude"
+		if len(args) == 2 {
+			agent = args[1]
+		}
+		files, err := sources.Discover(cwd, agent)
+		if err != nil {
+			return 1, err
+		}
+		fmt.Println(agent)
+		for _, file := range files {
+			fmt.Printf("%s\t~%d tokens\n", file.Path, file.Tokens)
+		}
+		return 0, nil
 	}
 	file := filepath.Join(cwd, "AGENTS.md")
 	if command == "write" {

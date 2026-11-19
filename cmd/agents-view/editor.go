@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/wlkr-si/agents-view/internal/check"
 	"github.com/wlkr-si/agents-view/internal/server"
+	"github.com/wlkr-si/agents-view/internal/sources"
 )
 
 func openEditor(dir string, open bool) error {
@@ -36,14 +36,14 @@ func openEditor(dir string, open bool) error {
 	})
 }
 
-func findSources(_ string, agent string) ([]server.Source, error) {
-	globals, err := check.Globals(agent)
+func findSources(dir, agent string) ([]server.Source, error) {
+	discovered, err := sources.Discover(dir, agent)
 	if err != nil {
 		return nil, err
 	}
-	files := make([]server.Source, 0, len(globals))
-	for _, file := range globals {
-		files = append(files, server.Source{Path: file.Path, Origin: "Global", Text: file.Text, Via: file.Via})
+	files := make([]server.Source, 0, len(discovered))
+	for _, file := range discovered {
+		files = append(files, server.Source{Path: file.Path, Origin: string(file.Origin), Text: file.Text, Via: file.Via})
 	}
 	return files, nil
 }
