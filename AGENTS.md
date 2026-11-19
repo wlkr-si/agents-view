@@ -7,7 +7,7 @@ One plain AGENTS.md serves every agent, the CLI, and the Editor.
 
 - Use the shared parser and writer for all AGENTS.md edits.
 - Keep the server on loopback. Pass diagram prompts to the local command as stdin.
-- Run the build, type check, and lint. Prove behavior with the real CLI and browser.
+- Run go build, go vet, gofmt and go run ./tools/budget. Prove behavior with the real CLI and browser.
 
 ## Pages
 
