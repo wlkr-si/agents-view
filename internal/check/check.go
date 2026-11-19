@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/wlkr-si/agents-view/internal/document"
+	"github.com/wlkr-si/agents-view/internal/sources"
 )
 
 type Result struct {
@@ -47,7 +48,7 @@ func Check(file, text string) (Result, error) {
 			return result, err
 		}
 		if len(entries) > 0 {
-			globals, err := globalFiles()
+			globals, err := sources.Globals(filepath.Dir(file))
 			if err != nil {
 				return result, err
 			}
@@ -97,9 +98,9 @@ func (result *Result) checkPages(file string, section document.Section) {
 	}
 }
 
-func containsQuote(globals []string, quote string) bool {
-	for _, text := range globals {
-		if strings.Contains(text, quote) {
+func containsQuote(globals []sources.Source, quote string) bool {
+	for _, source := range globals {
+		if strings.Contains(source.Text, quote) {
 			return true
 		}
 	}
