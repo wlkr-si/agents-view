@@ -51,6 +51,15 @@ var agents = []agent{
 	{"copilot", (*discovery).copilotGlobal, (*discovery).copilotProject},
 }
 
+// IDs lists every supported agent in display order.
+func IDs() []string {
+	ids := make([]string, len(agents))
+	for index, agent := range agents {
+		ids[index] = agent.id
+	}
+	return ids
+}
+
 // Discover returns Sources in load order, including on-demand Nested Sources.
 func Discover(dir, id string) ([]Source, error) {
 	for _, agent := range agents {

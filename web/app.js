@@ -358,6 +358,10 @@ function renderSources(sources) {
     {},
     element("option", { value: "claude" }, "Claude Code"),
     element("option", { value: "codex" }, "Codex"),
+    element("option", { value: "opencode" }, "OpenCode"),
+    element("option", { value: "gemini" }, "Gemini CLI"),
+    element("option", { value: "cursor" }, "Cursor"),
+    element("option", { value: "copilot" }, "GitHub Copilot"),
   );
   select.value = agent;
   select.setAttribute("aria-label", "Agent");

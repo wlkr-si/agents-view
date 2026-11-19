@@ -11,12 +11,12 @@ import (
 	"github.com/wlkr-si/agents-view/internal/sources"
 )
 
-const usage = `agents-view sections
+const usage = `agents-view [--no-open]
+agents-view sections
 agents-view read [section]
 agents-view write <section> < body.md
 agents-view check
-agents-view sources [--agent claude|codex|opencode|gemini|cursor|copilot]
-agents-view view [--no-open]`
+agents-view sources [--agent claude|codex|opencode|gemini|cursor|copilot]`
 
 func main() {
 	code, err := run(os.Args[1:])
@@ -28,12 +28,19 @@ func main() {
 }
 
 func run(args []string) (int, error) {
-	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
+	if len(args) > 0 && (args[0] == "--help" || args[0] == "-h") {
 		fmt.Println(usage)
 		return 0, nil
 	}
-	command, args := args[0], args[1:]
+	command := "view"
+	if len(args) > 0 && args[0] != "--no-open" {
+		command, args = args[0], args[1:]
+	}
 	switch command {
+	case "view":
+		if len(args) != 0 && (len(args) != 1 || args[0] != "--no-open") {
+			return 1, errors.New(usage)
+		}
 	case "sections", "check":
 		if len(args) != 0 {
 			return 1, errors.New(usage)
@@ -62,6 +69,9 @@ func run(args []string) (int, error) {
 	cwd, err = filepath.EvalSymlinks(cwd)
 	if err != nil {
 		return 1, err
+	}
+	if command == "view" {
+		return 0, openEditor(cwd, len(args) == 0)
 	}
 	if command == "sources" {
 		agent := "claude"
