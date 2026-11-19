@@ -177,6 +177,9 @@ select { font: 11px ui-monospace, monospace; }
 #panel header strong { color: var(--magenta); align-self: center; margin-left: 10px; font-weight: 400; }
 .panel-body { padding: 10px 12px; overflow: auto; }
 .panel-body > :first-child { margin-top: 0; }
+#diagram-preview form { margin-top: 0; }
+#diagram-preview iframe { display: block; width: 100%; border: 0; }
+.diagram-notes [data-diagram-text] { display: none; }
 .panel-body h1 { font-size: 15px; }
 .panel-body h2, .panel-body h3 { font-size: 13px; }
 .panel-body ul, .panel-body ol { padding-left: 20px; }

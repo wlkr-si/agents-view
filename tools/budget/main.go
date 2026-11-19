@@ -143,7 +143,7 @@ func outboundClients(root string) []string {
 			return err
 		}
 		if entry.IsDir() && (strings.HasPrefix(entry.Name(), ".") || entry.Name() == "node_modules" ||
-			path == filepath.Join("tools", "budget") || path == filepath.Join("tools", "release")) {
+			path == filepath.Join("tools", "budget") || path == filepath.Join("tools", "release") || path == filepath.Join("tools", "vendor-mermaid")) {
 			return filepath.SkipDir
 		}
 		if filepath.Ext(path) != ".go" {

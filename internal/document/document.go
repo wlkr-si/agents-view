@@ -61,6 +61,7 @@ type Section struct {
 	Start, End         int
 	BodyStart, BodyEnd int
 	Tokens             int
+	DiagramTexts       []string
 }
 
 func (section Section) DisplayName() string {
@@ -122,14 +123,15 @@ func newSection(name, heading, text string, start, end int) Section {
 	raw := text[start:end]
 	first, last := bodyBounds(raw)
 	body := raw[first:last]
+	sectionType, diagramTexts := describeSection(name, body)
 	return Section{
-		Name: name, Heading: heading, Body: body, Type: inferSectionType(name, body),
+		Name: name, Heading: heading, Body: body, Type: sectionType, DiagramTexts: diagramTexts,
 		Start: start, End: end, BodyStart: start + first, BodyEnd: start + last,
 		Tokens: (characterCount(heading) + characterCount(raw) + 3) / 4,
 	}
 }
 
-func inferSectionType(name, body string) SectionType {
+func describeSection(name, body string) (SectionType, []string) {
 	if name == "Overrides" {
 		lines := overrideEntries(body)
 		if len(lines) > 0 {
@@ -138,24 +140,27 @@ func inferSectionType(name, body string) SectionType {
 				valid = valid && line.matched
 			}
 			if valid {
-				return Overrides
+				return Overrides, nil
 			}
 		}
 	}
-	diagram, rules := false, false
+	var diagramTexts []string
+	rules := false
 	parseMarkdown(body, func(item markdownItem) {
-		diagram = diagram || item.diagram
+		if item.diagram {
+			diagramTexts = append(diagramTexts, item.diagramText)
+		}
 		rules = rules || item.bullet
 	})
 	switch {
-	case diagram:
-		return Diagram
+	case len(diagramTexts) > 0:
+		return Diagram, diagramTexts
 	case PageEntries(body) != nil:
-		return Pages
+		return Pages, nil
 	case rules:
-		return Rules
+		return Rules, nil
 	default:
-		return Text
+		return Text, nil
 	}
 }
 

@@ -35,7 +35,9 @@ Run `agents-view` from the project folder to edit its `AGENTS.md`. The Editor li
 | `check` | Report invalid format, broken pointers, stale overrides, and budget warnings |
 | `sources [--agent claude\|codex\|opencode\|gemini\|cursor\|copilot]` | List Sources and approximate tokens in load order |
 
-Diagram changes go to `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use a different local command that reads its prompt from stdin. The Editor shows Mermaid diagram text offline.
+Place the caret in a diagram section or click its Preview link to draw it in the active theme. The Editor loads the bundled Mermaid renderer on first use and draws offline. To request a change, describe it in Preview. The local command receives the prompt on stdin, and Preview updates when the command saves AGENTS.md. The default command is `codex exec -s workspace-write -`. Set `AGENTS_VIEW_AGENT_COMMAND` to a JSON array of arguments to use another command.
+
+To refresh the bundled renderer, run `go run ./tools/vendor-mermaid` from the repository root. It verifies the pinned Mermaid 11.12.2 bundle and its [MIT license](web/mermaid.LICENSE) by SHA-256 before writing them to `web/`.
 
 The Editor lists local Sources for Claude Code, Codex, OpenCode, Gemini CLI, Cursor, and GitHub Copilot. Use ⌘S or Ctrl+S to save, ⌘P or Ctrl+P to jump to a section or Source, and ⌘J or Ctrl+J to toggle Preview and Problems. See [SPEC.md](SPEC.md) for load order.
 
