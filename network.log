@@ -1,0 +1,46 @@
+No diagram REQUEST GET http://127.0.0.1:58873/
+No diagram REQUEST GET http://127.0.0.1:58873/theme.css
+No diagram REQUEST GET http://127.0.0.1:58873/style.css
+No diagram REQUEST GET http://127.0.0.1:58873/theme.js
+No diagram REQUEST GET http://127.0.0.1:58873/app.js
+No diagram REQUEST GET http://127.0.0.1:58873/syntax.js
+No diagram REQUEST GET http://127.0.0.1:58873/events
+No diagram REQUEST GET http://127.0.0.1:58873/theme.css?v=1
+No diagram REQUEST GET http://127.0.0.1:58873/project
+No diagram REQUEST GET http://127.0.0.1:58873/sources
+No diagram REQUEST GET http://127.0.0.1:58873/events
+No diagram REQUEST GET http://127.0.0.1:58873/project
+No diagram REQUEST GET http://127.0.0.1:58873/sources
+No diagram Rules in Preview: 0 frame request(s), 0 Mermaid request(s), 0 non-loopback request(s)
+Diagram project REQUEST GET http://127.0.0.1:58874/
+Diagram project REQUEST GET http://127.0.0.1:58874/theme.css
+Diagram project REQUEST GET http://127.0.0.1:58874/style.css
+Diagram project REQUEST GET http://127.0.0.1:58874/theme.js
+Diagram project REQUEST GET http://127.0.0.1:58874/app.js
+Diagram project REQUEST GET http://127.0.0.1:58874/syntax.js
+Diagram project REQUEST GET http://127.0.0.1:58874/events
+Diagram project REQUEST GET http://127.0.0.1:58874/project
+Diagram project REQUEST GET http://127.0.0.1:58874/sources
+Diagram project REQUEST GET http://127.0.0.1:58874/events
+Diagram project REQUEST GET http://127.0.0.1:58874/theme.css?v=1
+Diagram project REQUEST GET http://127.0.0.1:58874/project
+Diagram project REQUEST GET http://127.0.0.1:58874/sources
+Diagram project before selecting the diagram: 0 frame request(s), 0 Mermaid request(s), 0 non-loopback request(s)
+Diagram project REQUEST GET http://127.0.0.1:58874/diagram
+Diagram project REQUEST GET http://127.0.0.1:58874/mermaid-11.12.2.min.js
+Diagram project REQUEST GET http://127.0.0.1:58874/diagram.js
+Diagram project RESPONSE 200 http://127.0.0.1:58874/mermaid-11.12.2.min.js
+  content-encoding: gzip
+  content-length: 798176
+  cache-control: public, max-age=31536000, immutable
+  etag: "f8a0fc55cb90f1851dba5f07b4d3ddfc3723b7386d75ec480eb56c4f2d26ac2a"
+Diagram project after using the Preview link: 1 frame request(s), 1 Mermaid request(s), 0 non-loopback request(s)
+Diagram project REQUEST GET http://127.0.0.1:58874/theme
+Diagram project REQUEST POST http://127.0.0.1:58874/theme
+Diagram project REQUEST GET http://127.0.0.1:58874/theme.css?v=2
+Diagram project REQUEST GET http://127.0.0.1:58874/theme.css?v=3
+Diagram project REQUEST POST http://127.0.0.1:58874/preview
+Diagram project REQUEST POST http://127.0.0.1:58874/diagram
+Diagram project REQUEST GET http://127.0.0.1:58874/project
+Diagram project REQUEST GET http://127.0.0.1:58874/sources
+Diagram project after theme change, parse error, and local command: 1 frame request(s), 1 Mermaid request(s), 0 non-loopback request(s)

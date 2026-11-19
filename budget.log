@@ -1,0 +1,14 @@
++zsh:5> go build ./...
++zsh:5> go vet ./...
++zsh:5> gofmt -l .
++zsh:5> test -z ''
++zsh:5> go run ./tools/budget
+binary                        7.55 MB  limit 10 MB    ok
+  app.js                7.61 KB gzip
+  index.html            1.14 KB gzip
+  style.css             2.41 KB gzip
+  syntax.js             0.94 KB gzip
+  theme.js              1.21 KB gzip
+Editor assets (gzip)         13.31 KB  limit 20 KB    ok
+startup (median of 5)          7.9 ms  limit 50 ms    ok
+outbound network code               0  limit 0        ok
