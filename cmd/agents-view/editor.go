@@ -37,13 +37,13 @@ func openEditor(dir string, open bool) error {
 }
 
 func findSources(dir, agent string) ([]server.Source, error) {
-	discovered, err := sources.Discover(dir, agent)
+	discovered, err := sources.DiscoverLocal(dir, agent)
 	if err != nil {
 		return nil, err
 	}
 	files := make([]server.Source, 0, len(discovered))
 	for _, file := range discovered {
-		files = append(files, server.Source{Path: file.Path, Origin: string(file.Origin), Text: file.Text, Via: file.Via})
+		files = append(files, server.Source{Path: file.Path, Origin: string(file.Origin), Text: file.Text, Via: file.Via, OnDemand: file.OnDemand})
 	}
 	return files, nil
 }

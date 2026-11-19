@@ -3,23 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>agents-view</title>
+  <title>Agents View · the Editor</title>
+  <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/theme.js"></script>
   <script type="module" src="/app.js"></script>
 </head>
-<body>
-  <header class="shell masthead">
-    <div class="brand"><span aria-hidden="true">▤</span> agents-view</div>
-    <button id="theme" type="button">Dark mode</button>
-  </header>
-  <main class="shell">
-    <h1 id="project-name">AGENTS.md</h1>
-    <nav aria-label="View">
-      <button id="tab-project" class="tab active" aria-current="page" type="button">AGENTS.md</button>
-      <button id="tab-sources" class="tab" type="button">Sources</button>
-    </nav>
-    <p id="alert" role="status" hidden></p>
-    <div id="view" aria-live="off"></div>
+<body class="editor">
+  <aside aria-label="AGENTS.md and Sources">
+    <header>AGENTS.md</header>
+    <nav id="outline" aria-label="Sections"></nav>
+    <header>Sources <select id="agent" aria-label="Agent"></select></header>
+    <nav id="sources" aria-label="Sources"></nav>
+  </aside>
+  <main>
+    <div class="tab-strip">
+      <nav id="tabs" aria-label="Open tabs"></nav>
+      <button data-action="jump" title="Quick jump (⌘P)" aria-label="Quick jump">⌘P</button>
+      <button data-action="panel" title="Toggle panel (⌘J)" aria-label="Toggle panel" aria-expanded="true">⌘J</button>
+    </div>
+    <div id="conflict" class="notice" hidden>
+      AGENTS.md changed on disk.
+      <button data-action="reload">Reload</button>
+      <button data-action="keep">Keep mine</button>
+    </div>
+    <div id="message" class="notice" role="status" hidden></div>
+    <div class="work">
+      <div id="buffer">
+        <div class="gutter" aria-hidden="true"><div id="numbers"></div></div>
+        <div class="code">
+          <div id="highlight" aria-hidden="true"></div>
+          <textarea id="text" aria-label="AGENTS.md" wrap="off" spellcheck="false" autocapitalize="off" autocomplete="off" disabled></textarea>
+        </div>
+        <div class="lens"><div id="lens"></div></div>
+      </div>
+      <div id="source" hidden></div>
+    </div>
+    <section id="panel" aria-label="Preview and Problems">
+      <header>
+        <button data-panel="preview" aria-pressed="true">Preview</button>
+        <button data-panel="problems" aria-pressed="false">Problems <span id="problem-count"></span></button>
+        <strong id="panel-section"></strong>
+        <button data-action="panel" class="push" aria-label="Hide panel">×</button>
+      </header>
+      <div id="preview" class="panel-body"></div>
+      <div id="problems" class="panel-body" hidden></div>
+    </section>
   </main>
+  <footer>
+    <span id="position"></span>
+    <span id="section-status"></span>
+    <span class="push"></span>
+    <span id="override-status"></span>
+    <span id="budget"><meter min="0" max="1000" low="800" high="999" optimum="0" aria-label="budget"></meter> <span></span></span>
+    <button id="save" data-action="save" title="Save AGENTS.md (⌘S)" disabled>saved</button>
+    <button id="theme" type="button">◐ theme</button>
+  </footer>
+  <dialog id="jump" aria-label="Quick jump">
+    <input id="query" aria-label="Section or Source" placeholder="Section or Source" autocomplete="off" aria-controls="matches">
+    <div id="matches"></div>
+  </dialog>
 </body>
 </html>

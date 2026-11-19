@@ -62,13 +62,22 @@ func IDs() []string {
 
 // Discover returns Sources in load order, including on-demand Nested Sources.
 func Discover(dir, id string) ([]Source, error) {
+	return discoverAgent(dir, id, true)
+}
+
+// DiscoverLocal finds the Sources the Editor can read offline.
+func DiscoverLocal(dir, id string) ([]Source, error) {
+	return discoverAgent(dir, id, false)
+}
+
+func discoverAgent(dir, id string, fetchURLs bool) ([]Source, error) {
 	for _, agent := range agents {
 		if agent.id == id {
 			project, err := locateProject(dir)
 			if err != nil {
 				return nil, err
 			}
-			return discover(project, agent, true)
+			return discover(project, agent, true, fetchURLs)
 		}
 	}
 	return nil, fmt.Errorf("Unknown agent %q. Choose --agent from %s.", id, AgentIDs)
@@ -86,7 +95,7 @@ func Readers(dir string) (map[string]bool, error) {
 	}
 	readers := make(map[string]bool, len(agents))
 	for _, agent := range agents {
-		files, err := discover(project, agent, false)
+		files, err := discover(project, agent, false, false)
 		if err != nil {
 			return nil, err
 		}
@@ -180,18 +189,20 @@ func envDir(name, fallback string) string {
 
 type discovery struct {
 	project
-	nested bool
-	files  []Source
-	seen   map[string]bool
-	err    error
+	nested    bool
+	fetchURLs bool
+	files     []Source
+	seen      map[string]bool
+	err       error
 }
 
 func newDiscovery(project project, nested bool) *discovery {
 	return &discovery{project: project, nested: nested, files: []Source{}, seen: make(map[string]bool)}
 }
 
-func discover(project project, agent agent, nested bool) ([]Source, error) {
+func discover(project project, agent agent, nested, fetchURLs bool) ([]Source, error) {
 	d := newDiscovery(project, nested)
+	d.fetchURLs = fetchURLs
 	if agent.global != nil {
 		agent.global(d)
 	}

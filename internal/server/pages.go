@@ -85,7 +85,7 @@ func (editor *editor) page(w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy", editorPolicy)
-	fmt.Fprintf(w, `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/style.css"><main class="shell content"><p><a href="/">← AGENTS.md</a></p>%s</main></html>`, title, content)
+	fmt.Fprintf(w, `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/theme.css"><link rel="stylesheet" href="/style.css"><main class="page"><p><a href="/">← AGENTS.md</a></p>%s</main></html>`, title, content)
 	return nil
 }
 

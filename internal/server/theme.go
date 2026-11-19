@@ -17,8 +17,8 @@ func (editor *editor) themeCSS(w http.ResponseWriter) {
 
 func (editor *editor) editTheme(w http.ResponseWriter, r *http.Request) error {
 	if r.Header.Get("Content-Type") != "application/toml" {
-		return edit(w, r, func(data struct{ Name string }) error {
-			return editor.theme.Use(data.Name)
+		return edit(w, r, func(data struct{ Name string }) (any, error) {
+			return nil, editor.theme.Use(data.Name)
 		})
 	}
 	file := r.URL.Query().Get("file")
